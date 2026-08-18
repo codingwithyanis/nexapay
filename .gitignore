@@ -1,0 +1,20 @@
+# IDE
+.idea/
+*.iml
+
+# Java / Gradle / Maven
+target/
+build/
+.gradle/
+out/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Operating system
+.DS_Store
+

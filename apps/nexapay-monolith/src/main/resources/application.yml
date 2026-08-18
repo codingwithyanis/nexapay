@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: nexapay-monolith
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
