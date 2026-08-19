@@ -30,6 +30,16 @@ Consulter le cahier des charges pour la spécification complète : `NexaPay_Cahi
 
 ## Démarrage
 
+Les commandes de développement sont disponibles depuis la racine du dépôt :
+
+```bash
+make help
+```
+
+Le Makefile requiert GNU Make, Java 25 et, pour les commandes d'infrastructure, Docker Compose.
+
+Les commandes Maven restent aussi accessibles directement :
+
 ```bash
 ./mvnw verify
 ./mvnw -pl apps/nexapay-monolith spring-boot:run
@@ -46,6 +56,14 @@ docker compose ps
 ```
 
 Paramètres de connexion locaux : hôte `localhost`, port `5432`, base `nexapay`, utilisateur `nexapay` et mot de passe `nexapay`.
+
+Si le port `5432` est déjà utilisé, choisir un port hôte libre sans modifier le compose :
+
+```bash
+NEXAPAY_POSTGRES_PORT=5433 make infra-up
+```
+
+Dans cet exemple, la base reste accessible sur `localhost:5433`.
 
 Pour arrêter le service sans supprimer ses données :
 
@@ -64,3 +82,5 @@ Pour supprimer définitivement les données locales et repartir d'une base vide 
 ```bash
 docker compose down -v
 ```
+
+Depuis la racine du dépôt, les mêmes opérations sont disponibles avec `make infra-up`, `make infra-down`, `make infra-logs` et `make infra-reset`. Cette dernière commande supprime définitivement les données PostgreSQL locales.

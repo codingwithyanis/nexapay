@@ -24,7 +24,7 @@ Fournir un environnement PostgreSQL local, reproductible et démarrable avec Doc
 Le compose `infra/docker/docker-compose.yml` définit un seul service `postgres` fondé sur une image PostgreSQL officiellement maintenue. Il utilise :
 
 - une base, un utilisateur et un mot de passe de développement non sensibles ;
-- un port PostgreSQL local exposé ;
+- un port PostgreSQL local exposé, configurable avec `NEXAPAY_POSTGRES_PORT` (valeur par défaut : `5432`) ;
 - un volume nommé pour les données ;
 - `pg_isready` comme healthcheck.
 
