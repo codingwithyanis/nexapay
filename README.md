@@ -31,6 +31,36 @@ Consulter le cahier des charges pour la spécification complète : `NexaPay_Cahi
 ## Démarrage
 
 ```bash
-mvn verify
-mvn -pl apps/nexapay-monolith spring-boot:run
+./mvnw verify
+./mvnw -pl apps/nexapay-monolith spring-boot:run
+```
+
+### PostgreSQL local
+
+Un PostgreSQL local est disponible pour les prochaines étapes de développement. Il est réservé au poste de développement : les identifiants ci-dessous sont publics et ne doivent jamais être réutilisés hors de cet environnement.
+
+```bash
+cd infra/docker
+docker compose up -d
+docker compose ps
+```
+
+Paramètres de connexion locaux : hôte `localhost`, port `5432`, base `nexapay`, utilisateur `nexapay` et mot de passe `nexapay`.
+
+Pour arrêter le service sans supprimer ses données :
+
+```bash
+docker compose down
+```
+
+Pour consulter les logs :
+
+```bash
+docker compose logs -f postgres
+```
+
+Pour supprimer définitivement les données locales et repartir d'une base vide :
+
+```bash
+docker compose down -v
 ```
