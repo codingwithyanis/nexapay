@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: nexapay
       POSTGRES_PASSWORD: nexapay
     ports:
-      - "5432:5432"
+      - "${NEXAPAY_POSTGRES_PORT:-5432}:5432"
     volumes:
       - nexapay-postgres-data:/var/lib/postgresql/data
     healthcheck:
