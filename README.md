@@ -10,9 +10,8 @@ Niveau 0 — bootstrap et standards. Le build Maven multi-modules et le bootstra
 
 ## Organisation
 
-- `apps/nexapay-monolith/` : point d'entrée Spring Boot ; il assemble les modules sans les distribuer.
-- `libs/nexapay-{merchant,payment,ledger,identity-access,outbox,notification,fraud}/` : bounded contexts du monolithe.
-- `libs/nexapay-shared-kernel/` : primitives réellement partagées, à garder très petites.
+- `apps/nexapay-monolith/` : point d'entrée Spring Boot et bounded contexts internes sous `dev.nexapay`.
+- `libs/` : réservé à d'éventuelles primitives ou contrats réellement partagés et stables ; aucun bounded context métier n'y est publié.
 - `infra/` : Docker, Kubernetes et Terraform.
 - `docs/` : documentation d'architecture, ADR, API, sécurité, runbooks et preuves.
 - `tests/` : tests end-to-end, de charge et de chaos.

@@ -20,22 +20,27 @@
     <description>Parent Maven du modular monolith NexaPay</description>
 
     <modules>
-        <module>libs/nexapay-shared-kernel</module>
-        <module>libs/nexapay-merchant</module>
-        <module>libs/nexapay-payment</module>
-        <module>libs/nexapay-ledger</module>
-        <module>libs/nexapay-identity-access</module>
-        <module>libs/nexapay-outbox</module>
-        <module>libs/nexapay-notification</module>
-        <module>libs/nexapay-fraud</module>
         <module>apps/nexapay-monolith</module>
     </modules>
 
     <properties>
         <java.version>25</java.version>
+        <spring-modulith.version>2.1.0</spring-modulith.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>${java.version}</maven.compiler.release>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.modulith</groupId>
+                <artifactId>spring-modulith-bom</artifactId>
+                <version>${spring-modulith.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <pluginManagement>
