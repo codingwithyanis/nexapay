@@ -10,10 +10,12 @@ Niveau 0 — bootstrap et standards. Le build Maven multi-modules et le bootstra
 
 ## Architecture
 
-NexaPay est une application Spring Boot unique déployée depuis `apps/nexapay-monolith/`. Conformément à ADR-001, les bounded contexts métier — `merchant`, `payment`, `ledger`, `identity`, `outbox`, `notification` et `fraud` — seront des modules internes organisés par packages sous `dev.nexapay`.
+NexaPay est une application Spring Boot unique déployée depuis `apps/nexapay-monolith/`. Conformément à ADR-001, les bounded contexts métier — `merchant`, `payment`, `ledger`, `identity`, `outbox`, `notification` et `fraud` — sont des modules internes organisés par packages sous `dev.nexapay`.
 
-`libs/` est réservé aux primitives et contrats réellement partagés, notamment un éventuel shared kernel minimal. Les domaines métier ne sont pas des bibliothèques partagées : la structure Maven initiale doit être simplifiée avant le niveau 1 pour les intégrer au monolithe. Toute extraction en microservice exige une décision d’architecture documentée.
+`libs/` est réservé aux primitives et contrats réellement partagés, notamment un éventuel shared kernel minimal. Les domaines métier ne sont pas des bibliothèques partagées. Toute extraction en microservice exige une décision d’architecture documentée.
 
+- `apps/nexapay-monolith/` : point d'entrée Spring Boot et bounded contexts internes sous `dev.nexapay`.
+- `libs/` : réservé à d'éventuelles primitives ou contrats réellement partagés et stables ; aucun bounded context métier n'y est publié.
 - `infra/` : Docker, Kubernetes et Terraform.
 - `docs/` : ADR, architecture, API, sécurité, runbooks et preuves.
 - `tests/` : tests end-to-end, de charge et de chaos.

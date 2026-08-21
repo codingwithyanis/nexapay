@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Spring Modulith — dépendances entre modules</title>
+  <style>
+    :root{--bg:#0a1020;--card:#151f36;--line:#31415f;--ink:#eef4ff;--muted:#aab9d2;--cyan:#5de1ef;--violet:#b79cff;--green:#82e6ad;--amber:#f6ca70;--red:#ff89a5}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0,#273969 0,transparent 34rem),var(--bg);color:var(--ink);font:16px/1.65 Inter,ui-sans-serif,system-ui,sans-serif}
+    .wrap{width:min(1100px,calc(100% - 36px));margin:auto}header{padding:72px 0 38px;border-bottom:1px solid var(--line)}.eyebrow{color:var(--cyan);font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:.74rem}
+    h1{max-width:900px;margin:.4rem 0 1rem;font-size:clamp(2.6rem,7vw,5.5rem);line-height:.96;letter-spacing:-.065em}h2{font-size:clamp(1.55rem,3vw,2.25rem);line-height:1.12;letter-spacing:-.035em;margin:0 0 .8rem}h3{margin:0 0 .35rem;color:var(--cyan);font-size:1.02rem}
+    p,li,td{color:var(--muted)}strong{color:var(--ink)}a{color:var(--cyan)}code{padding:.1em .34em;border:1px solid #2a3858;border-radius:.35rem;background:#090f1e;color:#e1d7ff}pre{overflow:auto;margin:1rem 0;padding:1rem;border:1px solid var(--line);border-radius:13px;background:#090e1b;color:#d9e9ff;font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace}
+    .lead{max-width:760px;font-size:1.19rem}.pill{display:inline-block;padding:.25rem .62rem;margin-right:.4rem;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:.82rem}nav{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;padding:25px 0}nav a{padding:.6rem .75rem;border:1px solid var(--line);border-radius:10px;background:#111a2e;color:var(--muted);text-decoration:none;font-size:.84rem}nav a:hover{border-color:var(--cyan);color:var(--ink)}
+    main{padding:28px 0 85px}section{margin:0 0 28px;padding:27px;background:linear-gradient(135deg,#182440d9,#121b30d9);border:1px solid var(--line);border-radius:19px}.q{color:var(--violet);font-size:.86rem;font-weight:800;margin-bottom:.35rem}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.card{padding:17px;border:1px solid var(--line);border-radius:13px;background:#0d1528a8}.note{padding:.7rem 1rem;border-left:3px solid var(--amber);border-radius:0 9px 9px 0;background:#f6ca7014;color:#fbe7b6}.take{padding:.7rem 1rem;border-left:3px solid var(--green);border-radius:0 9px 9px 0;background:#82e6ad14;color:#d2f8df}.warning{padding:.7rem 1rem;border-left:3px solid var(--red);border-radius:0 9px 9px 0;background:#ff89a514;color:#ffd0da}
+    .diagram{margin:1.2rem 0;padding:12px;border:1px solid var(--line);border-radius:15px;background:#090f1f;overflow:auto}.diagram svg{display:block;width:100%;min-width:640px}.t{fill:#eef4ff;font:700 16px Inter,Arial,sans-serif}.s{fill:#aab9d2;font:13px Inter,Arial,sans-serif}.c{fill:#e1d7ff;font:12px ui-monospace,monospace}.box{fill:#172440;stroke:#40537b;stroke-width:1.5}.merchant{fill:#15393e;stroke:#5de1ef}.payment{fill:#332454;stroke:#b79cff}.internal{fill:#28182d;stroke:#ff89a5;stroke-dasharray:6 4}.ok{stroke:#82e6ad;stroke-width:3}.no{stroke:#ff89a5;stroke-width:3;stroke-dasharray:7 5}
+    table{width:100%;border-collapse:collapse;margin-top:1rem}th,td{padding:.7rem;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}th{color:var(--ink);font-size:.85rem}footer{padding:0 0 50px;color:var(--muted);font-size:.9rem}@media(max-width:700px){.wrap{width:min(100% - 22px,1100px)}header{padding-top:48px}section{padding:19px}.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="eyebrow">NexaPay · apprentissage d'architecture</div>
+  <h1>Spring Modulith : comprendre les dépendances entre modules</h1>
+  <p class="lead">Un monolithe n'est pas l'absence de frontières. C'est une seule application dans laquelle on choisit soigneusement qui peut connaître qui — puis on le vérifie à chaque build.</p>
+  <span class="pill">Java 25</span><span class="pill">Spring Boot 4.1</span><span class="pill">Spring Modulith 2.1</span>
+</div></header>
+<div class="wrap"><nav>
+  <a href="#p1">1 · Problème</a><a href="#p2">2 · Modèle mental</a><a href="#p3">3 · Sous le capot</a><a href="#p4">4 · Lifecycle</a><a href="#p5">5 · Garanties</a><a href="#p6">6 · Échecs</a><a href="#p7">7 · Trade-offs</a><a href="#p8">8 · Utilisation</a><a href="#p9">9 · Debug</a><a href="#p10">10 · Atelier</a><a href="#p11">11 · Plus bas</a>
+</nav></div>
+<main class="wrap">
+<section id="p1"><div class="q">1. Quel problème cela résout-il ?</div><h2>Le couplage invisible d'un monolithe qui grandit.</h2>
+<p>Dans une application compilée en un seul bloc, Java permet naturellement à Payment d'importer une classe privée de Merchant, puis à Merchant d'appeler Payment. L'application démarre encore ; mais une modification locale devient risquée, les responsabilités se mélangent et une extraction future coûte très cher.</p>
+<div class="grid"><div class="card"><h3>Avant</h3><p>Les packages sont une convention écrite dans un document. Elle est facile à oublier sous pression.</p></div><div class="card"><h3>Avec Modulith</h3><p>Les conventions deviennent des règles exécutables : les dépendances observées doivent correspondre aux dépendances autorisées.</p></div></div>
+<p class="note"><strong>Analogie.</strong> Un immeuble peut avoir une seule adresse, tout en ayant des appartements séparés. Sans portes, on traverse le salon du voisin pour aller travailler. Spring Modulith vérifie que les portes existent et que les passages autorisés sont explicites.</p>
+</section>
+
+<section id="p2"><div class="q">2. Quel est le modèle mental du mécanisme ?</div><h2>Un graphe de contrats dans une seule JVM.</h2>
+<p>Chaque package direct sous le package de l'application est un <strong>module applicatif</strong>. Le package racine est son interface par défaut. Ses sous-packages sont internes. Une arête <code>payment → merchant</code> autorise Payment à utiliser le contrat exposé de Merchant, jamais son implémentation.</p>
+<div class="diagram"><svg viewBox="0 0 900 260" aria-label="Payment dépend de Merchant mais pas de merchant internal"><defs><marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3z" fill="#82e6ad"/></marker><marker id="b" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3z" fill="#ff89a5"/></marker></defs><rect class="box payment" x="45" y="78" width="236" height="116" rx="15"/><text class="t" x="72" y="114">payment</text><text class="c" x="72" y="145">allowedDependencies</text><text class="c" x="72" y="164">= { merchant }</text><rect class="box merchant" x="572" y="39" width="252" height="80" rx="15"/><text class="t" x="599" y="74">merchant</text><text class="s" x="599" y="99">contrat exposé</text><rect class="box internal" x="572" y="157" width="252" height="68" rx="15"/><text class="t" x="599" y="189">merchant.internal</text><text class="s" x="599" y="211">détail privé</text><path class="ok" d="M281 110 C405 77,465 76,572 80" fill="none" marker-end="url(#a)"/><text class="s" x="394" y="61" fill="#82e6ad">autorisé</text><path class="no" d="M281 165 C400 211,470 200,572 193" fill="none" marker-end="url(#b)"/><text class="s" x="390" y="226" fill="#ff89a5">refusé</text></svg></div>
+<p class="take"><strong>Idée clé.</strong> Ce n'est ni un appel HTTP, ni une base séparée, ni un microservice. Les modules restent dans le même processus ; la frontière est logique et testée.</p>
+</section>
+
+<section id="p3"><div class="q">3. Comment cela fonctionne-t-il sous le capot ?</div><h2>Découvrir, modéliser, comparer, refuser.</h2>
+<ol><li><strong>Découverte :</strong> <code>ApplicationModules.of(NexaPayApplication.class)</code> part de <code>dev.nexapay</code> et détecte ses packages directs.</li><li><strong>Analyse :</strong> Spring Modulith utilise ArchUnit pour importer les classes compilées et leurs relations : signatures, imports, appels, injections Spring, héritages et annotations.</li><li><strong>Politique :</strong> <code>@ApplicationModule</code> et, au besoin, <code>@NamedInterface</code> disent ce qui est exposé et autorisé.</li><li><strong>Vérification :</strong> <code>verify()</code> compare le graphe réel à la politique et fait échouer le test en cas de violation.</li></ol>
+<pre>private static final ApplicationModules MODULES =
+    ApplicationModules.of(NexaPayApplication.class);
+
+@Test
+void verifiesModularStructure() {
+    MODULES.verify();
+}</pre>
+<p>Dans NexaPay, ce code est dans <code>ModularityTests</code>. La règle actuelle dit que Payment peut dépendre de Merchant ; les autres modules n'ont aucune dépendance métier autorisée.</p>
+</section>
+
+<section id="p4"><div class="q">4. Quel est son lifecycle ?</div><h2>La frontière est surtout contrôlée au build.</h2>
+<div class="diagram"><svg viewBox="0 0 900 170" aria-label="Cycle de vérification"><defs><marker id="c1" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3z" fill="#5de1ef"/></marker></defs><rect class="box" x="25" y="55" width="132" height="54" rx="12"/><text class="t" x="49" y="88">Code Java</text><rect class="box" x="205" y="55" width="135" height="54" rx="12"/><text class="t" x="228" y="88">Compile</text><rect class="box payment" x="388" y="55" width="160" height="54" rx="12"/><text class="t" x="413" y="88">ArchUnit</text><rect class="box" x="596" y="55" width="126" height="54" rx="12"/><text class="t" x="619" y="88">verify()</text><rect class="box merchant" x="770" y="55" width="100" height="54" rx="12"/><text class="t" x="792" y="88">CI verte</text><path d="M157 82H205M340 82H388M548 82H596M722 82H770" stroke="#5de1ef" stroke-width="3" marker-end="url(#c1)"/></svg></div>
+<p>Maven compile, Surefire lance JUnit, puis JUnit appelle <code>verify()</code>. Au runtime, le starter core peut fournir d'autres capacités Modulith si elles sont ajoutées ; mais la protection de structure n'intercepte pas chaque appel de méthode dans la JVM. Elle est d'abord une vérification statique reproductible.</p>
+</section>
+
+<section id="p5"><div class="q">5. Quelles garanties fournit-il ?</div><h2>Des garanties de structure, pas une sécurité magique.</h2>
+<table><thead><tr><th>Garantie</th><th>Oui</th><th>Non</th></tr></thead><tbody>
+<tr><td>Pas de cycle</td><td>Détecte Merchant → Payment → Merchant.</td><td>Ne prouve pas que les APIs publiques sont bien conçues.</td></tr>
+<tr><td>Internals protégés</td><td>Refuse une dépendance vers <code>merchant.internal</code>.</td><td>Ne remplace pas l'encapsulation Java, la sécurité ou la revue.</td></tr>
+<tr><td>Whitelist</td><td>Payment est limité à Merchant dans NexaPay.</td><td>Ne crée pas une transaction distribuée ni une base privée.</td></tr>
+<tr><td>CI reproductible</td><td>Le même test tourne à chaque build.</td><td>Ne remplace pas les tests métier et d'intégration.</td></tr>
+</tbody></table>
+</section>
+
+<section id="p6"><div class="q">6. Comment et pourquoi peut-il échouer ?</div><h2>Il échoue lorsque le code contredit la frontière annoncée.</h2>
+<div class="grid"><div class="card"><h3>Import interne</h3><p>Payment importe un repository de Merchant. Répare avec une façade ou un contrat plus étroit.</p></div><div class="card"><h3>Dépendance absente</h3><p>Payment appelle Fraud sans l'avoir déclaré. Supprime le besoin ou fais évoluer la règle après décision explicite.</p></div><div class="card"><h3>Cycle</h3><p>Deux modules se rappellent mutuellement. Inverse la dépendance, extrais un contrat ou publie un événement local.</p></div><div class="card"><h3>Module invisible</h3><p>L'application n'est pas au package racine. Place-la à <code>dev.nexapay</code>, comme NexaPay.</p></div></div>
+<p class="warning"><strong>Piège.</strong> Laisser <code>allowedDependencies</code> à sa valeur par défaut ne restreint pas réellement le module. Une règle large peut donner une fausse impression de protection.</p>
+</section>
+
+<section id="p7"><div class="q">7. Quels sont ses coûts et ses trade-offs ?</div><h2>De la friction maintenant, moins de dette plus tard.</h2>
+<div class="grid"><div class="card"><h3>Coûts</h3><p>Il faut décider les contrats, maintenir les règles et accepter que le chemin direct soit parfois interdit. L'analyse ajoute aussi du temps au test.</p></div><div class="card"><h3>Gains</h3><p>Une dépendance devient visible dans le diff et bloquée en CI. Une extraction éventuelle part d'un code déjà moins emmêlé.</p></div></div>
+<p>Évite deux extrêmes : aucun contrat, ou une façade pour chaque détail. Un bon contrat inter-module est petit, orienté besoin métier et stable. Une façade qui expose tout est un mur avec une porte de garage.</p>
+</section>
+
+<section id="p8"><div class="q">8. Quand dois-je l'utiliser / ne pas l'utiliser ?</div><h2>Quand le monolithe est le bon déploiement, mais pas le bon prétexte au désordre.</h2>
+<div class="grid"><div class="card"><h3>Utilise-le</h3><p>Application Spring Boot avec plusieurs domaines, durée de vie importante, équipe qui veut empêcher les accès directs aux données d'un autre domaine, ou extraction possible plus tard.</p></div><div class="card"><h3>Ne le force pas</h3><p>Petit service à une responsabilité, prototype jetable, bibliothèque sans Spring, ou système déjà découpé en services avec frontières de déploiement réelles.</p></div></div>
+<p>Spring Modulith n'est pas une étape obligatoire avant les microservices. Il est précisément utile quand <strong>le monolithe reste le choix opérationnel le plus simple</strong>.</p>
+</section>
+
+<section id="p9"><div class="q">9. Comment l'observer et le debugger ?</div><h2>Lis une violation comme le récit d'une dépendance.</h2>
+<pre># Le contrôle d'architecture seul
+./mvnw -pl apps/nexapay-monolith test -Dtest=ModularityTests
+
+# Le même filet que la CI
+./mvnw --batch-mode --no-transfer-progress verify
+
+# La règle Payment actuelle
+sed -n '1,80p' apps/nexapay-monolith/src/main/java/dev/nexapay/payment/package-info.java</pre>
+<p>Lis la chaîne complète : <em>module source → type utilisé → module cible → règle attendue</em>. Pose ensuite la vraie question : « Payment a-t-il réellement besoin de ce détail de Merchant ? » Le message d'erreur est souvent une piste de conception, pas seulement un obstacle de build.</p>
+</section>
+
+<section id="p10"><div class="q">10. Puis-je l'expliquer, le dessiner, l'implémenter, le casser et le réparer ?</div><h2>Oui : fais-en un mini-laboratoire.</h2>
+<div class="grid"><div class="card"><h3>Implémenter</h3><pre>/** Payment peut utiliser Merchant. */
+@ApplicationModule(
+  allowedDependencies = {"merchant"}
+)
+package dev.nexapay.payment;</pre></div><div class="card"><h3>Casser volontairement</h3><pre>// Dans payment : à ne pas faire
+import dev.nexapay.merchant.internal
+    .MerchantRepository;</pre></div></div>
+<p>Le test doit alors échouer. Pour réparer, ne déplace pas seulement l'import : décide d'abord si Payment a besoin d'une façade Merchant, d'une interface nommée, d'un événement local, ou si le besoin appartient en réalité à Merchant.</p>
+<p class="take"><strong>Explication en une phrase.</strong> « Spring Modulith construit le graphe des dépendances entre nos packages métier et fait échouer le build lorsqu'une dépendance sort des contrats autorisés. »</p>
+</section>
+
+<section id="p11"><div class="q">11. Que se passe-t-il une couche plus bas ?</div><h2>Du bytecode, des annotations de package et de l'analyse statique.</h2>
+<p>Une dépendance Java ne se limite pas à un import textuel. Elle peut vivre dans un champ, un paramètre, un type de retour, une annotation, une injection Spring ou un appel. Après compilation, ces références sont inscrites dans le bytecode. ArchUnit les lit sans démarrer l'application.</p>
+<div class="diagram"><svg viewBox="0 0 900 190" aria-label="Couches sous Spring Modulith"><rect class="box" x="25" y="34" width="190" height="116" rx="15"/><text class="t" x="53" y="70">Code source</text><text class="s" x="53" y="99">packages · imports</text><text class="s" x="53" y="122">package-info.java</text><rect class="box" x="255" y="34" width="164" height="116" rx="15"/><text class="t" x="282" y="70">Bytecode</text><text class="s" x="282" y="99">types référencés</text><text class="s" x="282" y="122">annotations</text><rect class="box payment" x="459" y="34" width="164" height="116" rx="15"/><text class="t" x="487" y="70">ArchUnit</text><text class="s" x="487" y="99">graphe réel</text><text class="s" x="487" y="122">des classes</text><rect class="box merchant" x="663" y="34" width="210" height="116" rx="15"/><text class="t" x="690" y="70">Spring Modulith</text><text class="s" x="690" y="99">règles + violations</text><text class="s" x="690" y="122">build vert ou rouge</text><path d="M215 92H255M419 92H459M623 92H663" stroke="#5de1ef" stroke-width="3"/></svg></div>
+<p>Les annotations de <code>package-info.java</code> sont elles aussi compilées. Spring Modulith les consulte, associe les classes à leurs modules, puis compare les dépendances observées aux dépendances autorisées. Plus bas encore : Maven compile, Surefire lance le test, la CI répète l'opération. C'est puissant, mais cela ne remplace ni l'autorisation, ni les transactions, ni les tests métier.</p>
+</section>
+</main>
+<footer class="wrap">NexaPay · cours versionné · Sources : <a href="https://docs.spring.io/spring-modulith/reference/">documentation officielle Spring Modulith</a> et la configuration de ce dépôt.</footer>
+</body>
+</html>
+
