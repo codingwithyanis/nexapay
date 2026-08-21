@@ -8,12 +8,16 @@ Le développement débute en **modular monolith** : PostgreSQL est la source de 
 
 Niveau 0 — bootstrap et standards. Le build Maven multi-modules et le bootstrap Spring Boot sont prêts ; les cas d'usage métier commencent ensuite au niveau 1.
 
-## Organisation
+## Architecture
+
+NexaPay est une application Spring Boot unique déployée depuis `apps/nexapay-monolith/`. Conformément à ADR-001, les bounded contexts métier — `merchant`, `payment`, `ledger`, `identity`, `outbox`, `notification` et `fraud` — sont des modules internes organisés par packages sous `dev.nexapay`.
+
+`libs/` est réservé aux primitives et contrats réellement partagés, notamment un éventuel shared kernel minimal. Les domaines métier ne sont pas des bibliothèques partagées. Toute extraction en microservice exige une décision d’architecture documentée.
 
 - `apps/nexapay-monolith/` : point d'entrée Spring Boot et bounded contexts internes sous `dev.nexapay`.
 - `libs/` : réservé à d'éventuelles primitives ou contrats réellement partagés et stables ; aucun bounded context métier n'y est publié.
 - `infra/` : Docker, Kubernetes et Terraform.
-- `docs/` : documentation d'architecture, ADR, API, sécurité, runbooks et preuves.
+- `docs/` : ADR, architecture, API, sécurité, runbooks et preuves.
 - `tests/` : tests end-to-end, de charge et de chaos.
 - `observability/` : dashboards et alertes versionnés.
 
@@ -25,61 +29,53 @@ Niveau 0 — bootstrap et standards. Le build Maven multi-modules et le bootstra
 - Les secrets, données carte et données personnelles inutiles ne sont jamais versionnés ni journalisés.
 - Kafka et les microservices sont introduits seulement quand une décision d'architecture le justifie.
 
-Consulter le cahier des charges pour la spécification complète : `NexaPay_Cahier_des_Charges_Production_Grade.pdf`.
+## Références
 
-## Démarrage
+- [Cahier des charges NexaPay](NexaPay_Cahier_des_Charges_Production_Grade.pdf)
+- [ADR-001 — Modular monolith avant les microservices](docs/adr/ADR-001-modular-monolith.md)
 
-Les commandes de développement sont disponibles depuis la racine du dépôt :
+## Quickstart
+
+### Prérequis
+
+- Java 25 ;
+- Docker Compose ;
+- GNU Make.
+
+### Démarrer localement
+
+Depuis la racine du dépôt :
 
 ```bash
 make help
+make infra-up
+make test
+make run
 ```
 
-Le Makefile requiert GNU Make, Java 25 et, pour les commandes d'infrastructure, Docker Compose.
+`make infra-up` démarre PostgreSQL. Par défaut, la base est accessible avec l’hôte `localhost`, le port `5432`, la base `nexapay`, l’utilisateur `nexapay` et le mot de passe `nexapay`. Ces identifiants sont exclusivement destinés au développement local.
 
-Les commandes Maven restent aussi accessibles directement :
-
-```bash
-./mvnw verify
-./mvnw -pl apps/nexapay-monolith spring-boot:run
-```
-
-### PostgreSQL local
-
-Un PostgreSQL local est disponible pour les prochaines étapes de développement. Il est réservé au poste de développement : les identifiants ci-dessous sont publics et ne doivent jamais être réutilisés hors de cet environnement.
-
-```bash
-cd infra/docker
-docker compose up -d
-docker compose ps
-```
-
-Paramètres de connexion locaux : hôte `localhost`, port `5432`, base `nexapay`, utilisateur `nexapay` et mot de passe `nexapay`.
-
-Si le port `5432` est déjà utilisé, choisir un port hôte libre sans modifier le compose :
+Si le port `5432` est déjà utilisé, choisir un port hôte libre :
 
 ```bash
 NEXAPAY_POSTGRES_PORT=5433 make infra-up
 ```
 
-Dans cet exemple, la base reste accessible sur `localhost:5433`.
+Dans ce cas, PostgreSQL est accessible sur `localhost:5433`.
 
-Pour arrêter le service sans supprimer ses données :
-
-```bash
-docker compose down
-```
-
-Pour consulter les logs :
+Pour arrêter PostgreSQL sans supprimer ses données :
 
 ```bash
-docker compose logs -f postgres
+make infra-down
 ```
 
-Pour supprimer définitivement les données locales et repartir d'une base vide :
+Les commandes disponibles sont listées par `make help`. `make infra-reset` supprime définitivement les données PostgreSQL locales.
+
+### Alternatives directes
+
+Le Makefile est le point d’entrée recommandé. Maven Wrapper reste accessible pour les besoins ponctuels :
 
 ```bash
-docker compose down -v
+./mvnw verify
+./mvnw -pl apps/nexapay-monolith spring-boot:run
 ```
-
-Depuis la racine du dépôt, les mêmes opérations sont disponibles avec `make infra-up`, `make infra-down`, `make infra-logs` et `make infra-reset`. Cette dernière commande supprime définitivement les données PostgreSQL locales.

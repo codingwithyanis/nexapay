@@ -83,10 +83,8 @@ Chaque niveau se termine par des tests reproductibles, une démonstration, une n
 - Les commits suivent Conventional Commits, avec un message français et l'identifiant Linear : `ci: ajouter la vérification Maven et les quality gates (ALL-42)`.
 - Le titre de la pull request commence par l'identifiant Linear et décrit le résultat livré : `ALL-42 — Ajouter la vérification Maven et les quality gates`.
 - Éviter les noms vagues tels que `setup`, `update`, `fix`, `test` ou `work` sans préciser le périmètre livré.
-
 ## Apprentissages techniques
 
 - Lorsqu'un utilisateur demande d'expliquer une notion technique au travers des questions « problème, modèle mental, mécanisme interne, lifecycle, garanties, échecs, trade-offs, usage, observation, expérimentation et couche inférieure », créer ou mettre à jour un cours dans `docs/learning/`.
 - Ces cours sont des fichiers HTML autonomes, jamais des fichiers Markdown. Ils utilisent un thème sombre soigné, des schémas et diagrammes intégrés, des exemples liés au projet et une mise en page lisible sans dépendance externe.
 - Le ton est pédagogique et humain : une explication formelle est accompagnée d'une analogie juste pour accélérer l'intuition, sans simplifier au point de déformer le mécanisme.
-
